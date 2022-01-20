@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Colaluca</title>
+    <style>
+        header {
+            padding: 1em;
+            color: black;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body style="background-image: url(big.jpg); background-size: cover; background-repeat: no-repeat;">
+    <header>
+        <div style="display: inline-flex; margin:auto">
+            <img src="pelai.png" alt="" style="width: 15%; margin-right: 25%; position: fixed; margin-left: -13%; margin-top: -3%;">
+            <h1>Start Streaming</h1>
+        </div>
+    </header>
+    <div>
+        <hr size="5px" color="black">
+    </div>
+    <br><br>
+    <table style="width: 98vw;">
+      <tr>
+        <td>
+          <div>
+            <h3>Video Capture Device</h3>
+            <div style="color: white;">
+                <span id="startFace" style="cursor: pointer; text-decoration: none; color: inherit;">Start</span> &nbsp; <span style="cursor: pointer; text-decoration: none; color: inherit;" id="stopFace">Stop</span>
+            </div>
+        </div>
+        <br><br>
+        <div>
+            <h3>Display Capture</h3>
+            <div style="color: white;">
+                <span id="startDisplay" style="cursor: pointer; text-decoration: none; color: inherit;">Start</span> &nbsp; <span style="cursor: pointer; text-decoration: none; color: inherit;" id="stopDisplay">Stop</span>
+            </div>
+        </div>
+        <br><br>
+        <div>
+            <h3>Audio Capture</h3>
+            <div style="color: white;">
+                <span style="text-decoration: none; color: inherit;">Start</span> &nbsp; <span style="text-decoration: none; color: inherit;">Pause</span> &nbsp; <span style="text-decoration: none; color: inherit;">Stop</span>
+            </div>
+        </div>
+        <div style="height: 100px;">
+        </td>
+        <td>
+          <div style="position: relative;">
+            <video id="videoDisplay" autoplay></video>
+            <div style="position: absolute; bottom: 0; right: 0;">
+              <device type="media" onchange="update(this.data)"></device>
+              <video id="videoFace" autoplay style="width: 200px; border: 1px solid gray;"></video>
+            </div>
+          </div>
+        </td>
+      </tr>
+    </table>
+
+    </div>
+    <div style="width: 100%; text-align: right;">
+        <h3 style="color: white; background-color: black; display: inline; padding: 6px;"><a href="Manage_Account.html" style="text-decoration: none; color: inherit;">Back</a></h3>
+    </div>
+</body>
+
+</html>
+
+<style>
+  #videoDisplay {
+    width: 700px;
+  display: block;
+  margin: auto;
+  background-color: lightgray;
+}
+</style>
+
+
+<script>
+  const videoElem = document.getElementById("videoDisplay");
+const startElem = document.getElementById("startDisplay");
+const stopElem = document.getElementById("stopDisplay");
+
+// Options for getDisplayMedia()
+
+var displayMediaOptions = {
+  video: {
+    cursor: "always"
+  },
+  audio: false
+};
+
+// Set event listeners for the start and stop buttons
+startElem.addEventListener("click", function(evt) {
+  startCapture();
+}, false);
+
+stopElem.addEventListener("click", function(evt) {
+  stopCapture();
+}, false);
+
+
+async function startCapture() {
+
+  try {
+    videoElem.srcObject = await navigator.mediaDevices.getDisplayMedia(displayMediaOptions);
+    dumpOptionsInfo();
+  } catch(err) {
+    console.error("Error: " + err);
+  }
+}
+
+
+function stopCapture(evt) {
+  let tracks = videoElem.srcObject.getTracks();
+
+  tracks.forEach(track => track.stop());
+  videoElem.srcObject = null;
+}
+
+
+function dumpOptionsInfo() {
+  const videoTrack = videoElem.srcObject.getVideoTracks()[0];
+
+  console.info("Track settings:");
+  console.info(JSON.stringify(videoTrack.getSettings(), null, 2));
+  console.info("Track constraints:");
+  console.info(JSON.stringify(videoTrack.getConstraints(), null, 2));
+}
+
+
+
+
+
+
+
+
+
+
+
+
+function update(stream) {
+    document.getElementById('videoFace').src = stream.url;
+  }
+  function hasGetUserMedia() {
+  return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+}
+if (hasGetUserMedia()) {
+  // Good to go!
+} else {
+  alert("getUserMedia() is not supported by your browser");
+}
+
+const constraints = {
+  video: true,
+};
+
+const video = document.getElementById("videoFace");
+
+const hdConstraints = {
+  video: { width: { min: 200 }, height: { min: 200 } },
+};
+
+
+
+const vgaConstraints = {
+  video: { width: { exact: 200 }, height: { exact: 200 } },
+};
+
+
+
+function startFace () {
+  navigator.mediaDevices.getUserMedia(constraints).then((stream) => {
+    video.srcObject = stream;
+  });
+  navigator.mediaDevices.getUserMedia(hdConstraints).then((stream) => {
+    video.srcObject = stream;
+  });
+  navigator.mediaDevices.getUserMedia(vgaConstraints).then((stream) => {
+    video.srcObject = stream;
+  });
+}
+
+function stopFace () {
+  video.srcObject = null;
+}
+
+document.getElementById("startFace").addEventListener("click", function(evt) {
+  startFace();
+}, false);
+
+document.getElementById("stopFace").addEventListener("click", function(evt) {
+  stopFace();
+}, false);
+
+const videoElement = document.getElementById("videoFace");
+
+navigator.mediaDevices
+  .enumerateDevices()
+  .then(gotDevices)
+  .then(getStream)
+  .catch(handleError);
+
+function gotDevices(deviceInfos) {
+  for (let i = 0; i !== deviceInfos.length; ++i) {
+    const deviceInfo = deviceInfos[i];
+    const option = document.createElement("option");
+    option.value = deviceInfo.deviceId;
+    if (deviceInfo.kind === "audioinput") {
+      option.text =
+        deviceInfo.label || "microphone " + (audioSelect.length + 1);
+      audioSelect.appendChild(option);
+    } else if (deviceInfo.kind === "videoinput") {
+      option.text = deviceInfo.label || "camera " + (videoSelect.length + 1);
+      videoSelect.appendChild(option);
+    } else {
+      console.log("Found another kind of device: ", deviceInfo);
+    }
+  }
+}
+
+function getStream() {
+  if (window.stream) {
+    window.stream.getTracks().forEach(function (track) {
+      track.stop();
+    });
+  }
+
+  const constraints = {
+    audio: {
+      deviceId: { exact: audioSelect.value },
+    },
+    video: {
+      deviceId: { exact: videoSelect.value },
+    },
+  };
+
+  navigator.mediaDevices
+    .getUserMedia(constraints)
+    .then(gotStream)
+    .catch(handleError);
+}
+
+function gotStream(stream) {
+  window.stream = stream; // make stream available to console
+  videoElement.srcObject = stream;
+}
+
+function handleError(error) {
+  console.error("Error: ", error);
+}
+</script>
